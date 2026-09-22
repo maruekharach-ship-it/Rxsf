@@ -1,0 +1,108 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+-- Create GUI Elements
+local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local Title = Instance.new("TextLabel")
+local SpeedInput = Instance.new("TextBox")
+local ToggleButton = Instance.new("TextButton")
+local UICorner = Instance.new("UICorner")
+
+-- Setup GUI Properties
+ScreenGui.Name = "TPWalkGUI"
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.ResetOnSpawn = false
+
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+MainFrame.Position = UDim2.new(0.05, 0, 0.4, 0)
+MainFrame.Size = UDim2.new(0, 200, 0, 130)
+MainFrame.Active = true
+MainFrame.Draggable = true -- สามารถลาก GUI ไปมาบนหน้าจอได้
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 8)
+MainCorner.Parent = MainFrame
+
+Title.Name = "Title"
+Title.Parent = MainFrame
+Title.BackgroundTransparency = 1
+Title.Position = UDim2.new(0, 0, 0.05, 0)
+Title.Size = UDim2.new(1, 0, 0.2, 0)
+Title.Font = Enum.Font.SourceSansBold
+Title.Text = "TP Walk Speed"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 18
+
+-- Input Box สำหรับกรอกความเร็ว
+SpeedInput.Name = "SpeedInput"
+SpeedInput.Parent = MainFrame
+SpeedInput.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+SpeedInput.Position = UDim2.new(0.1, 0, 0.3, 0)
+SpeedInput.Size = UDim2.new(0.8, 0, 0.25, 0)
+SpeedInput.Font = Enum.Font.SourceSans
+SpeedInput.PlaceholderText = "ใส่ความเร็ว (เช่น 2)"
+SpeedInput.Text = "2"
+SpeedInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpeedInput.TextSize = 16
+
+local InputCorner = Instance.new("UICorner")
+InputCorner.CornerRadius = UDim.new(0, 4)
+InputCorner.Parent = SpeedInput
+
+-- ปุ่มเปิด/ปิด การทำงาน
+ToggleButton.Name = "ToggleButton"
+ToggleButton.Parent = MainFrame
+ToggleButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+ToggleButton.Position = UDim2.new(0.1, 0, 0.65, 0)
+ToggleButton.Size = UDim2.new(0.8, 0, 0.25, 0)
+ToggleButton.Font = Enum.Font.SourceSansBold
+ToggleButton.Text = "OFF"
+ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleButton.TextSize = 16
+
+local ButtonCorner = Instance.new("UICorner")
+ButtonCorner.CornerRadius = UDim.new(0, 4)
+ButtonCorner.Parent = ToggleButton
+
+-- TP Walk Logic
+local tpWalking = false
+local tpConnection = nil
+
+local function startTPWalk()
+    if tpConnection then tpConnection:Disconnect() end
+    
+    tpConnection = RunService.Heartbeat:Connect(function()
+        if tpWalking and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            local chr = LocalPlayer.Character
+            local hum = chr.Humanoid
+            local hrp = chr.HumanoidRootPart
+            local speedMultiplier = tonumber(SpeedInput.Text) or 1
+            
+            -- ตรวจสอบว่าผู้เล่นกำลังเดินอยู่หรือไม่
+            if hum.MoveDirection.Magnitude > 0 then
+                hrp.CFrame = hrp.CFrame + (hum.MoveDirection * speedMultiplier)
+            end
+        end
+    end)
+end
+
+-- Toggle Switch Event
+ToggleButton.MouseButton1Click:Connect(function()
+    tpWalking = not tpWalking
+    if tpWalking then
+        ToggleButton.Text = "ON"
+        ToggleButton.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+        startTPWalk()
+    else
+        ToggleButton.Text = "OFF"
+        ToggleButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+        if tpConnection then
+            tpConnection:Disconnect()
+            tpConnection = nil
+        end
+    end
+end)
